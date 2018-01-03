@@ -3,22 +3,113 @@
   <head>
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/twittler.css">
   </head>
   <body>
     <script>
 
+// <> <> <> <> <> <> <> <> <> <> Content <> <> <> <> <> <> <> <> <> <>
+
       $(document).ready(function(){
+
+        var all = streams.home;
+        var individual = function(str){
+          return streams.users[str];
+        };
+        var displayState = all; // toggle between all and individual tweets (all default for home)
+
+// body
+
         var $body = $('body');
         $body.html('');
 
-        var index = streams.home.length - 1;
-        while(index >= 0){
-          var tweet = streams.home[index];
-          var $tweet = $('<div></div>');
-          $tweet.text('@' + tweet.user + ': ' + tweet.message);
-          $tweet.appendTo($body);
-          index -= 1;
+        var $spacer = $('<div class="spacer"></div>');
+        $spacer.appendTo($body);
+
+// header
+
+        var $twittler = $('<div class="title"><h1>TWITTLER</h1></div>');
+        $twittler.appendTo($body);
+
+// favorites
+
+        var $favorites = $('<div class="favorites"><p id="following">FOLLOWING</p><br></div>');
+        $favorites.appendTo($body);
+
+        function showFavorites(){
+          for (var i = 0; i < users.length; i++){
+            var user = users[i];
+            var $user = $('<div class="favorite" id="' + user + '"><p>' + user + '</p></div>');
+            $user.appendTo('.favorites');
+          }
         }
+        showFavorites();
+
+
+
+// refresh
+
+        var $refreshButton = $('<div class="refresh"><p>UPDATE FEED</p></div>');
+        $refreshButton.appendTo($body);
+
+// tweets
+
+        function display(array){
+          var $content = $('<div class="content"></div>');
+          $content.appendTo($body);
+
+          for (var i = array.length -1; i >= 0; i--){
+            var tweet = array[i];
+            var time = parseTime(tweet.created_at.toString());
+            var $tweet = $(
+              '<div class="box" id="' + tweet.user + '">' +
+              '@' + tweet.user + ': <hr>' + tweet.message +
+              '<hr><p id="time">' + time +
+              '</p></div>'
+            );
+            $tweet.prependTo($content);
+
+
+            $('.box').on('click', changeDisplayState);
+            $('.favorite').on('click', changeDisplayState);
+          }
+        };
+
+        display(displayState);
+
+// <> <> <> <> <> <> <> <> <> <> Utility <> <> <> <> <> <> <> <> <> <>
+
+        function changeDisplayState(e){
+          var person = e.target.id || this.id;
+          $(".content").remove();
+          displayState = individual(person);
+          display(displayState);
+        }
+
+        function parseTime(str){
+          var arr = str.split(' ');
+          var time = arr[4];
+          var timeArray = time.split(':');
+          var readableTime;
+          var result;
+
+          if (Number(timeArray[0]) > 12){
+            readableTime = (Number(timeArray[0]) % 12).toString() + ":" + timeArray[1] + 'PM';
+          } else {
+            readableTime = timeArray[0] + ":" + timeArray[1] + 'AM';
+          }
+
+          result = arr.slice(0, 3).join(' ') + ' at ' + readableTime;
+
+          return result;
+        }
+
+        $refreshButton.on('click', function(e){
+          e.preventDefault();
+          $(".content").remove();
+          displayState = all;
+          display(displayState);
+        });
 
       });
 
